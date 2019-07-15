@@ -15,9 +15,13 @@ import java.util.stream.Collectors;
  *
  * @author sbrandt
  */
-public class Guard {
+public class Guard implements Comparable<Guard> {
     static AtomicInteger idSeq = new AtomicInteger(0);
     public final int id = idSeq.getAndIncrement();
+
+    public int compareTo(Guard g) {
+        return id - g.id;
+    }
     
     public String toString() {
         return "Guard("+id+")";
@@ -42,6 +46,9 @@ public class Guard {
         runGuarded(tg, r);
     }
 
+    public static void runGuarded(Guard g, Runnable r) {
+        g.runGuarded(r);
+    }
     public static void runGuarded(TreeSet<Guard> gset, Runnable r) {
         GuardTask gt = new GuardTask(gset,r);
         gt.run();

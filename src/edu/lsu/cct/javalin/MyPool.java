@@ -17,15 +17,16 @@ public class MyPool {
         busy--;
         assert busy >= 0;
         if (busy == 0)
-            notify();
+            notifyAll();
     }
 
     synchronized void awaitQuiet() {
-        while (busy > 0)
+        while (busy > 0) {
             try {
                 wait();
             } catch (InterruptedException ioe) {
             }
+        }
     }
 
     final static AtomicInteger idSeq = new AtomicInteger(0);
@@ -33,20 +34,21 @@ public class MyPool {
     class Worker extends Thread {
         final int id = idSeq.getAndIncrement();
 
-        Worker() {
-        }
+        Worker() {}
 
         LinkedList<Runnable> ll = new LinkedList<>();
 
         synchronized void addTask(Runnable t) {
             ll.addLast(t);
+            // This worker just became busy
             if(ll.size() == 1) {
                 incrBusy();
-                notify();
+                // this worker now has tasks...
+                notifyAll();
             }
         }
 
-        synchronized Runnable rmTask(boolean[] doDecr) {
+        synchronized Runnable rmTask(boolean[] done) {
             while (ll.size() == 0) {
                 try {
                     wait();
@@ -54,19 +56,19 @@ public class MyPool {
                 }
             }
             Runnable gt = ll.removeFirst();
-            doDecr[0] = ll.size() == 0;
+            done[0] = ll.size() == 0;
             return gt;
         }
 
         public void run() {
-            boolean[] doDecr = new boolean[1];
+            boolean[] done = new boolean[1];
             try {
                 while (true) {
-                    Runnable gt = rmTask(doDecr);
+                    Runnable gt = rmTask(done);
                     try {
                         gt.run();
                     } finally {
-                        if(doDecr[0])
+                        if(done[0])
                             decrBusy();
                     }
                 }
@@ -80,6 +82,9 @@ public class MyPool {
     List<Worker> workers = new ArrayList<>();
     final Random RAND = new Random();
 
+    /**
+     * Give task to a random worker.
+     */
     void add(Runnable gt) {
         int n = RAND.nextInt(workers.size());
         workers.get(n).addTask(gt);
