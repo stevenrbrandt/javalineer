@@ -2,8 +2,10 @@ package edu.lsu.cct.javalin.test;
 
 import edu.lsu.cct.javalin.*;
 import java.util.function.Consumer;
+import java.util.TreeSet;
 
 class TwoTimes implements Consumer<Future<Boolean>> {
+    static int lastSuccess;
     int n = 1;
     final int id;
     TwoTimes(int id) { this.id = id; }
@@ -16,6 +18,7 @@ class TwoTimes implements Consumer<Future<Boolean>> {
         } else {
             System.out.println("id="+id+"!");
             f.set(true);
+            lastSuccess = id;
         }
     }
 
@@ -27,13 +30,16 @@ class TwoTimes implements Consumer<Future<Boolean>> {
 public class TestCond {
     public static void main(String[] args) {
         Cond c = new Cond();
-        for(int i=0;i<3;i++)
+        final int N = 5;
+        for(int i=0;i<N;i++)
             c.add(new TwoTimes(i+1));
-        System.out.println("=======");
-        c.signal();
-        Pool.await();
-        System.out.println("=======");
-        c.signal();
-        Pool.await();
+        TreeSet<Integer> ts = new TreeSet<>();
+        for(int i=0;i<N;i++) {
+            System.out.println("=======");
+            c.signal();
+            Pool.await();
+            ts.add(TwoTimes.lastSuccess);
+        }
+        assert(ts.size()==N);
     }
 }
