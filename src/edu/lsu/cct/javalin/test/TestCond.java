@@ -41,5 +41,9 @@ public class TestCond {
             ts.add(TwoTimes.lastSuccess);
         }
         assert(ts.size()==N);
+        for(int i=0;i<N;i++)
+            c.add(new TwoTimes(i+1));
+        System.out.println("+++++++++++");
+        c.signalAll();
     }
 }

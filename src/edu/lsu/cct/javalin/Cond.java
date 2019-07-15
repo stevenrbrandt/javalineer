@@ -95,18 +95,26 @@ public class Cond {
     }
 
     public void signalAll() {
-        while(true) {
-            CondList cl = remove();
-            //System.out.println("cl="+cl);
-            if(cl == null)
-                break;
-            Future<Boolean> f = new Future<>();
-            f.then((b)->{
-                if(!b.get()) {
-                    addBack(cl);
-                }
-            });
-            cl.task.accept(f);
+        Pile p = pile.getAndSet(new Pile());
+        while(p.in != null) {
+            CondList cl = p.in;
+            p.in = p.in.next;
+            subSignalAll(cl);
         }
+        while(p.out != null) {
+            CondList cl = p.out;
+            p.out = p.out.next;
+            subSignalAll(cl);
+        }
+    }
+
+    private void subSignalAll(CondList cl) {
+        Future<Boolean> f = new Future<>();
+        f.then((b)->{
+            if(!b.get()) {
+                addBack(cl);
+            }
+        });
+        cl.task.accept(f);
     }
 }
