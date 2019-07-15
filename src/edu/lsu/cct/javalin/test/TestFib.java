@@ -14,13 +14,10 @@ public class TestFib {
         }
         Future<Integer> f1 = fib(n-1);
         Future<Integer> f2 = fib(n-2);
-        Guard g = new Guard();
         Future<Integer> f = new Future<>();
         f1.then((n1)->{
             f2.then((n2)->{
-            final int n1val = n1.get();
-                final int n2val = n2.get();
-                f.set(n1val + n2val);
+                f.set(n1.get() + n2.get());
             });
         });
         return f;
