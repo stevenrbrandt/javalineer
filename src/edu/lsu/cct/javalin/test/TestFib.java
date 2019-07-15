@@ -1,0 +1,43 @@
+package edu.lsu.cct.javalin.test;
+
+import edu.lsu.cct.javalin.*;
+
+public class TestFib {
+    static int fibc(int n) {
+        if(n < 2) return n;
+        return fibc(n-1) + fibc(n-2);
+    }
+
+    static Future<Integer> fib(int n) {
+        if(n < 2) {
+            return new Future<Integer>(n);
+        }
+        Future<Integer> f1 = fib(n-1);
+        Future<Integer> f2 = fib(n-2);
+        Guard g = new Guard();
+        Future<Integer> f = new Future<>();
+        f1.then((n1)->{
+            f2.then((n2)->{
+            final int n1val = n1.get();
+                final int n2val = n2.get();
+                f.set(n1val + n2val);
+            });
+        });
+        return f;
+    }
+
+    public static void main(String[] args) {
+        Test.requireAssert();
+
+        for(int i = 5; i < 20; i++) {
+            final int f = i;
+            Future<Integer> fib = fib(f);
+            fib.then((n)->{
+                System.out.printf("fib(%d)=%d%n",f,n.get());
+                assert n.get() == fibc(f);
+            });
+        }
+
+        Pool.await();
+    }
+}

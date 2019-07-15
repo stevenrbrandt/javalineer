@@ -28,7 +28,6 @@ public class GuardTask {
     final List<AtomicReference<GuardTask>> next = new ArrayList<>();
 
     private final List<Guard> gset = new ArrayList<>();
-    private final List<Watcher> watchers = new ArrayList<>();
     private final Runnable r;
     private volatile int index = 0;
 
@@ -60,15 +59,9 @@ public class GuardTask {
         this.r = r;
     }
 
-    GuardTask(TreeSet<Guard> gset, Runnable r, Set<Watcher> gwset) {
-        this(gset, r);
-        this.watchers.addAll(gwset);
-    }
-    
     public void run() {
         if(gset.size()==0) {
             run(r,gset);
-            decr();
             return;
         }
         int ix = index;
@@ -100,19 +93,8 @@ public class GuardTask {
             index--;
             free();
         }
-        if(ix == 0) {
-            for (Watcher gw : watchers) {
-                gw.decr();
-            }
-        }
     }
 
-    private void decr() {
-        for(Watcher gw : watchers) {
-            gw.decr();
-        }
-    }
-    
     private void runTask(Guard g) {
         if(index + 1 == gset.size()) {
             // Don't need to force async, but do

@@ -6,20 +6,34 @@
 package edu.lsu.cct.javalin;
 
 import java.util.TreeSet;
+import java.util.List;
+import java.util.ArrayList;
+
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Stream;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
  * @author sbrandt
  */
 public class Future<T> {
+    static class FTask {
+        Runnable task;
+        FTask next;
+    }
 
     private volatile T data = null;
     private volatile Throwable ex = null;
-    private volatile boolean isset = false;
+    private final static FTask DONE = new FTask();
+    private final AtomicReference<FTask> pending = new AtomicReference<>(null);
+
+    public Future() {}
+    public Future(T t) {
+        data = t;
+        pending.set(DONE);
+    }
 
     /**
      * Diagnostic.
@@ -38,58 +52,75 @@ public class Future<T> {
         e.printStackTrace();
     }
 
+    void done() {
+        FTask next = null;
+        while(true) {
+            next = pending.get();
+            assert next != DONE;
+            if(pending.compareAndSet(next,DONE))
+                break;
+        }
+        while(next != null) {
+            final Runnable task = next.task;
+            Pool.run(()->{
+                task.run();
+            });
+            next = next.next;
+        }
+    }
+
     /**
      * Call to set a data value.
      */
-    void set(final T data) {
-        assert !this.isset;
+    @SuppressWarnings("unchecked")
+    public void set(final T data) {
         final Future<T> self = this;
-        if (data instanceof Future<?>) {
-            Future<?> f = (Future<?>)data;
-            self.watcher.await(()->{
-                self.set(data);
+        if (data instanceof Future) {
+            Future<T> f = (Future<T>)data;
+            f.then(()->{
+                self.set(f.get());
             });
         } else {
             this.data = data;
-            this.isset = true;
-            watcher.decr();
+            done();
         }
     }
 
     /**
      * Call if an exception was thrown.
      */
-    void setEx(Throwable ex) {
-        assert !this.isset;
+    public void setEx(Throwable ex) {
         complain(ex);
         this.data = null;
         this.ex = ex;
-        this.isset = true;
-        watcher.decr();
+        done();
     }
 
-    public volatile Watcher watcher = new Watcher();
-
     public T get() { 
-        if(!isset)
-            throw new Error("Data is not ready");
+        assert pending.get() == DONE;
         if(ex != null)
             throw new RuntimeException(ex);
         return data;
     }
 
-    public Future<Void> await(Runnable r) {
-        Future<Void> f = new Future<>();
-        f.watcher.incr();
-        watcher.await(()->{
-            if(ex == null) {
-                r.run();
-                f.set(null);
-            } else {
-                f.setEx(ex);
+    public void then(final Runnable r) {
+        FTask ft = new FTask();
+        ft.task = r;
+        while(true) {
+            ft.next = pending.get();
+            if(ft.next == DONE) {
+                Pool.run(()->{ r.run(); });
+                break;
+            } else if(pending.compareAndSet(ft.next, ft)) {
+                break;
             }
-        });
-        return f;
+        }
+    }
+
+    public void then(Consumer<Future<T>> c) {
+        final Future<T> self = this;
+        Runnable r = ()->{ c.accept(this); };
+        then(r);
     }
 
     @Override
