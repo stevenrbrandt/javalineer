@@ -36,9 +36,24 @@ public class Cond {
         cl.state.set(CondState.ready);
     }
 
+    private CondList getNext(AtomicReference<CondList> cl) {
+        CondList next = null;
+        while(true) {
+            next = cl.get();
+            if(next == null)
+                return null;
+            if(next.state.get() == CondState.finished) {
+                CondList nx = next.next.get();
+                cl.compareAndSet(next, nx);
+            } else
+                break;
+        }
+        return next;
+    }
+
     public void signal() {
-        //Here.println("head: "+head.get());
-        signal(head.get());
+        CondList cl = getNext(head);
+        signal(cl);
     }
 
     private void signal(CondList cl) {
@@ -58,12 +73,12 @@ public class Cond {
                 cl.task.accept(f);
                 break;
             }
-            cl = cl.next.get();
+            cl = getNext(cl.next);
         }
     }
 
     public void signalAll() {
-        CondList cl = head.get();
+        CondList cl = getNext(head);
         while(cl != null) {
             //Here.println("all: "+cl);
             if(cl.state.compareAndSet(CondState.ready, CondState.busy)) {
@@ -78,7 +93,7 @@ public class Cond {
                 });
                 cl.task.accept(f);
             }
-            cl = cl.next.get();
+            cl = getNext(cl.next);
         }
     }
 }
