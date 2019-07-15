@@ -9,9 +9,8 @@ public class TestFib {
     }
 
     static Future<Integer> fib(int n) {
-        if(n < 2) {
+        if(n < 2)
             return new Future<Integer>(n);
-        }
         Future<Integer> f1 = fib(n-1);
         Future<Integer> f2 = fib(n-2);
         Future<Integer> f = new Future<>();

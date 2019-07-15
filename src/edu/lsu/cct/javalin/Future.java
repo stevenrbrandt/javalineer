@@ -22,6 +22,9 @@ public class Future<T> {
     static class FTask {
         Runnable task;
         FTask next;
+        public String toString() {
+            return "@"+next;
+        }
     }
 
     private volatile T data = null;
