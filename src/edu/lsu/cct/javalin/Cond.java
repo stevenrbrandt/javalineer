@@ -1,23 +1,22 @@
 package edu.lsu.cct.javalin;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
+
 public class Cond {
+    static enum CondState { ready, busy, finished };
     static class CondList {
-        volatile CondList next;
+        volatile AtomicReference<CondList> next = new AtomicReference<>(null);
+        final AtomicReference<CondState> state = new AtomicReference<>(CondState.ready);
         volatile Consumer<Future<Boolean>> task;
         public String toString() {
-            return task.toString()+"|"+next;
+            return task.toString()+":"+state.get()+"|"+next;
         }
     }
-    static class Pile {
-        volatile CondList in, out;
-        public String toString() {
-            return "{"+in+"}{"+out+"}";
-        }
-    }
-    AtomicReference<Pile> pile = new AtomicReference<>(new Pile());
+    AtomicReference<CondList> head = new AtomicReference<>(null);
 
     public void add(Consumer<Future<Boolean>> c) {
         CondList cl = new CondList();
@@ -26,95 +25,60 @@ public class Cond {
     }
     private void add(CondList cl) {
         while(true) {
-            Pile p = pile.get();
-            Pile p2 = new Pile();
-            cl.next = p.in;
-            p2.in = cl;
-            p2.out = p.out;
-            if(pile.compareAndSet(p,p2)) {
+            cl.next.set(head.get());
+            if(head.compareAndSet(cl.next.get(), cl))
                 break;
-            }
         }
+        //Here.println(head.get());
     }
 
     private void addBack(CondList cl) {
-        while(true) {
-            Pile p = pile.get();
-            Pile p2 = new Pile();
-            cl.next = p.out;
-            p2.in = p.in;
-            p2.out = cl;
-            if(pile.compareAndSet(p,p2))
-                break;
-        }
-    }
-
-    public CondList remove() {
-        while(true) {
-            Pile p = pile.get();
-            //Here.println("p="+p);
-            Pile p2 = new Pile();
-            if(p.in == null) {
-                if(p.out == null) {
-                    return null;
-                }
-                CondList ret = p.out;
-                p2.in = ret.next;
-                p2.out = null;
-                if(pile.compareAndSet(p,p2))
-                    return ret;
-            } else {
-                CondList ret = p.in;
-                p2.in = ret.next;
-                p2.out = p.out;
-                if(pile.compareAndSet(p,p2))
-                    return ret;
-            }
-        }
+        cl.state.set(CondState.ready);
     }
 
     public void signal() {
-        CondList cl = remove();
-        subSignal(cl,cl);
+        //Here.println("head: "+head.get());
+        signal(head.get());
     }
 
-    private void subSignal(CondList cl, CondList end) {
-        if(cl == null)
-            return;
-        Future<Boolean> f = new Future<>();
-        f.then((b)->{
-            boolean ans = b.get();
-            if(!ans) {
-                addBack(cl);
-                CondList cn = remove();
-                if(cn != end)
-                    subSignal(cn,end);
+    private void signal(CondList cl) {
+        while(cl != null) {
+            //Here.println("signal: "+cl);
+            if(cl.state.compareAndSet(CondState.ready, CondState.busy)) {
+                final CondList cf = cl;
+                Future<Boolean> f = new Future<>();
+                f.then((b)->{
+                    if(b.get()) {
+                        cf.state.compareAndSet(CondState.busy, CondState.finished);
+                    } else {
+                        cf.state.compareAndSet(CondState.busy, CondState.ready);
+                        signal(cf.next.get());
+                    }
+                });
+                cl.task.accept(f);
+                break;
             }
-        });
-        cl.task.accept(f);
+            cl = cl.next.get();
+        }
     }
 
     public void signalAll() {
-        Pile p = pile.getAndSet(new Pile());
-        while(p.in != null) {
-            CondList cl = p.in;
-            p.in = p.in.next;
-            subSignalAll(cl);
-        }
-        while(p.out != null) {
-            CondList cl = p.out;
-            p.out = p.out.next;
-            subSignalAll(cl);
-        }
-    }
-
-    private void subSignalAll(CondList cl) {
-        Future<Boolean> f = new Future<>();
-        f.then((b)->{
-            if(!b.get()) {
-                addBack(cl);
+        CondList cl = head.get();
+        while(cl != null) {
+            //Here.println("all: "+cl);
+            if(cl.state.compareAndSet(CondState.ready, CondState.busy)) {
+                final CondList cf = cl;
+                Future<Boolean> f = new Future<>();
+                f.then((b)->{
+                    if(b.get()) {
+                        cf.state.compareAndSet(CondState.busy, CondState.finished);
+                    } else {
+                        cf.state.compareAndSet(CondState.busy, CondState.ready);
+                    }
+                });
+                cl.task.accept(f);
             }
-        });
-        cl.task.accept(f);
+            cl = cl.next.get();
+        }
     }
 }
