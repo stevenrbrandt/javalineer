@@ -65,6 +65,13 @@ public class Guard implements Comparable<Guard> {
         cmgr.signalAll();
     }
 
+    public static <T> void runCondition(GuardVar<T> gv,final CondArg1<T> c) {
+        TreeSet<Guard> ts = new TreeSet<>();
+        ts.add(gv);
+        Consumer<Future<Boolean>> con = (f)->{ c.run(gv.var, f); };
+        runCondition(ts,con);
+    }
+
     public static void runCondition(final TreeSet<Guard> ts,final Consumer<Future<Boolean>> c) {
         assert ts.size() > 0;
         Cond cond = new Cond();

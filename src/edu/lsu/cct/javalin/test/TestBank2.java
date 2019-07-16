@@ -4,7 +4,7 @@ import edu.lsu.cct.javalin.*;
 
 public class TestBank2 {
 
-    static class Bank {
+    static class Bank extends Guarded {
         int balance = 0;
 
         boolean withdraw(int a) {
@@ -21,8 +21,6 @@ public class TestBank2 {
         }
     }
 
-    static int failures = 0;
-
     public static void main(String[] args) {
         Test.requireAssert();
 
@@ -30,14 +28,14 @@ public class TestBank2 {
 
         for(int i=0;i<1000;i++) {
             Pool.run(()->{
-                a.runGuarded((bank)->{
-                    if(!bank.get().withdraw(1))
-                        failures++;
+                Guard.runCondition(a,(bank,fb)->{
+                    fb.set(bank.get().withdraw(1));
                 });
             });
             Pool.run(()->{
                 a.runGuarded((bank)->{
                     bank.get().deposit(1);
+                    bank.get().getGuard().signal();
                 });
             });
         }
@@ -47,7 +45,7 @@ public class TestBank2 {
 
         a.runGuarded((bank)->{
             out[0] = bank.get().balance;
-            assert out[0] == failures;
+            assert out[0] == 0;
         });
 
         Pool.await();
