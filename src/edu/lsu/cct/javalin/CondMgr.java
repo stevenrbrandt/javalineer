@@ -24,7 +24,7 @@ public class CondMgr {
     }
 
     private void addBack(CondLink cl) {
-        cl.cond.state.set(CondState.ready);
+        cl.cond.state.set(Cond.READY);
     }
 
     private CondLink getRef(AtomicReference<CondLink> ref) {
@@ -33,7 +33,7 @@ public class CondMgr {
             r = ref.get();
             if(r == null)
                 return null;
-            if(r.cond.state.get() == CondState.finished) {
+            if(r.cond.state.get() == Cond.FINISHED) {
                 CondLink r2 = r.next.get();
                 ref.compareAndSet(r, r2);
             } else
@@ -50,14 +50,14 @@ public class CondMgr {
     private void signal(CondLink cl) {
         while(cl != null) {
             //Here.println("signal: "+cl);
-            if(cl.cond.state.compareAndSet(CondState.ready, CondState.busy)) {
+            if(cl.cond.state.compareAndSet(Cond.READY, Cond.BUSY)) {
                 final CondLink cf = cl;
                 Future<Boolean> f = new Future<>();
                 f.then((b)->{
                     if(b.get()) {
-                        cf.cond.state.compareAndSet(CondState.busy, CondState.finished);
+                        cf.cond.state.compareAndSet(Cond.BUSY, Cond.FINISHED);
                     } else {
-                        cf.cond.state.compareAndSet(CondState.busy, CondState.ready);
+                        cf.cond.state.compareAndSet(Cond.BUSY, Cond.READY);
                         signal(cf.next.get());
                     }
                 });
@@ -72,14 +72,14 @@ public class CondMgr {
         CondLink cl = getRef(head);
         while(cl != null) {
             //Here.println("all: "+cl);
-            if(cl.cond.state.compareAndSet(CondState.ready, CondState.busy)) {
+            if(cl.cond.state.compareAndSet(Cond.READY, Cond.BUSY)) {
                 final CondLink cf = cl;
                 Future<Boolean> f = new Future<>();
                 f.then((b)->{
                     if(b.get()) {
-                        cf.cond.state.compareAndSet(CondState.busy, CondState.finished);
+                        cf.cond.state.compareAndSet(Cond.BUSY, Cond.FINISHED);
                     } else {
-                        cf.cond.state.compareAndSet(CondState.busy, CondState.ready);
+                        cf.cond.state.compareAndSet(Cond.BUSY, Cond.READY);
                     }
                 });
                 cl.cond.task.accept(f);

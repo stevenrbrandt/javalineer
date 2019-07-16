@@ -76,7 +76,7 @@ class Segment {
     Segment(int id) { this.id = id; }
 
     void runStep(final int step) {
-        Here.println("id="+id+" step="+step);
+        //Here.println("id="+id+" step="+step);
         if(step == 10) {
             System.out.println("Complete!");
             return;

@@ -90,12 +90,18 @@ public class MyPool {
         workers.get(n).addTask(gt);
     }
 
+    final int size;
     public MyPool(int size) {
+        this.size = size;
         for (int i = 0; i < size; i++) {
             Worker w = this.new Worker();
             w.setDaemon(true);
             workers.add(w);
             w.start();
         }
+    }
+
+    public String toString() {
+        return "MyPool("+size+")";
     }
 }

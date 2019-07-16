@@ -11,6 +11,9 @@ package edu.lsu.cct.javalin;
  */
 public class Pool {
     private static final MyPool POOL = new MyPool(Integer.parseInt(System.getProperty("POOL_SIZE","4")));
+    static {
+        System.out.println("Pool size: "+POOL);
+    }
     public static void await() {
         POOL.awaitQuiet();
     }
