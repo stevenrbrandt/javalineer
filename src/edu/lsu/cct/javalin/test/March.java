@@ -57,7 +57,9 @@ class ProdCon {
 }
 
 class Segment {
-    final boolean all_ = true;
+    final static boolean all_ = true;
+    final static int N_STEPS = 100;
+    final static int N_SEGS = 10;
 
     final int id;
 
@@ -76,8 +78,7 @@ class Segment {
     Segment(int id) { this.id = id; }
 
     void runStep(final int step) {
-        //Here.println("id="+id+" step="+step);
-        if(step == 10) {
+        if(step == N_STEPS && id == 0) {
             System.out.println("Complete!");
             return;
         }
@@ -148,14 +149,13 @@ class Segment {
 public class March {
 
     public static void main(String[] args) {
-        final int N = 20;
-        System.out.println("N=" + N);
+        System.out.println("Segment.N_SEGS=" + Segment.N_SEGS);
         final List< Segment> segs = new ArrayList<>();
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < Segment.N_SEGS; i++) {
             segs.add(new Segment(i));
         }
 
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < Segment.N_SEGS; i++) {
             Segment seg = segs.get(i);
             if (i == 0) {
                 seg.left = seg.neighborLeft = new GuardVar< ProdCon>(new ProdCon(true));
@@ -163,7 +163,7 @@ public class March {
                 seg.neighborLeft = segs.get(i - 1).right;
             }
 
-            if (i + 1 == N) {
+            if (i + 1 == Segment.N_SEGS) {
                 seg.right = seg.neighborRight = new GuardVar< ProdCon>(new ProdCon(true));
             } else {
                 seg.neighborRight = segs.get(i + 1).left;
@@ -172,7 +172,7 @@ public class March {
             System.out.println("seg: "+seg);
         }
 
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < Segment.N_SEGS; i++) {
             final Segment seg = segs.get(i);
             seg.runStep(0);
         }

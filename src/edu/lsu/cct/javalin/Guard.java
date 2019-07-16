@@ -116,8 +116,16 @@ public class Guard implements Comparable<Guard> {
             Runnable r = ()->{ c.accept(fb); };
             Guard.runGuarded(ts,r);
         };
-        for(Guard g : ts) {
-            g.cmgr.add(new CondLink(cond));
-        }
+        Future<Boolean> f = new Future<>();
+        f.then((b)->{
+            if(b.get()) {
+                ;
+            } else {
+                for(Guard g : ts) {
+                    g.cmgr.add(new CondLink(cond));
+                }
+            }
+        });
+        cond.task.accept(f);
     }
 }

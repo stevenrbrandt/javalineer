@@ -20,7 +20,6 @@ public class CondMgr {
             if(head.compareAndSet(cl.next.get(), cl))
                 break;
         }
-        //Here.println(head.get());
     }
 
     private void addBack(CondLink cl) {
@@ -49,7 +48,6 @@ public class CondMgr {
 
     private void signal(CondLink cl) {
         while(cl != null) {
-            //Here.println("signal: "+cl);
             if(cl.cond.state.compareAndSet(Cond.READY, Cond.BUSY)) {
                 final CondLink cf = cl;
                 Future<Boolean> f = new Future<>();
@@ -71,7 +69,6 @@ public class CondMgr {
     public void signalAll() {
         CondLink cl = getRef(head);
         while(cl != null) {
-            //Here.println("all: "+cl);
             if(cl.cond.state.compareAndSet(Cond.READY, Cond.BUSY)) {
                 final CondLink cf = cl;
                 Future<Boolean> f = new Future<>();
