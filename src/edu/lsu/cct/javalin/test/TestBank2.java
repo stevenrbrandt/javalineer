@@ -2,7 +2,7 @@ package edu.lsu.cct.javalin.test;
 
 import edu.lsu.cct.javalin.*;
 
-public class TestBank {
+public class TestBank2 {
 
     static class Bank {
         int balance = 0;

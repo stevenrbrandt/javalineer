@@ -5,10 +5,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-public class Cond {
-    final AtomicReference<CondState> state = new AtomicReference<>(CondState.ready);
-    volatile Consumer<Future<Boolean>> task;
+public class CondLink {
+    volatile AtomicReference<CondLink> next = new AtomicReference<>(null);
+    final Cond cond;
+    public CondLink(Cond c) { cond = c; }
     public String toString() {
-        return task.toString()+":"+state.get();
+        return cond.toString()+"|"+next;
     }
 }

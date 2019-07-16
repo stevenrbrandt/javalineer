@@ -32,7 +32,7 @@ class TwoTimes implements Consumer<Future<Boolean>> {
 
 public class TestCond {
     public static void main(String[] args) {
-        Cond c = new Cond();
+        CondMgr c = new CondMgr();
         final int N = 5;
         for(int i=0;i<N;i++)
             c.add(new TwoTimes(i+1));

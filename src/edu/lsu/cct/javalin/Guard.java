@@ -10,6 +10,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 /**
  *
@@ -52,5 +53,27 @@ public class Guard implements Comparable<Guard> {
     public static void runGuarded(TreeSet<Guard> gset, Runnable r) {
         GuardTask gt = new GuardTask(gset,r);
         gt.run();
+    }
+
+    CondMgr cmgr = new CondMgr();
+
+    public void signal() {
+        cmgr.signal();
+    }
+
+    public void signalAll() {
+        cmgr.signalAll();
+    }
+
+    public static void runCondition(final TreeSet<Guard> ts,final Consumer<Future<Boolean>> c) {
+        assert ts.size() > 0;
+        Cond cond = new Cond();
+        cond.task = (fb)->{
+            Runnable r = ()->{ c.accept(fb); };
+            Guard.runGuarded(ts,r);
+        };
+        for(Guard g : ts) {
+            g.cmgr.add(new CondLink(cond));
+        }
     }
 }

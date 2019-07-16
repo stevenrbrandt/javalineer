@@ -25,7 +25,7 @@ public class TestFib {
     public static void main(String[] args) {
         Test.requireAssert();
 
-        for(int i = 5; i < 20; i++) {
+        for(int i = 5; i < 27; i++) {
             final int f = i;
             Future<Integer> fib = fib(f);
             fib.then((n)->{
