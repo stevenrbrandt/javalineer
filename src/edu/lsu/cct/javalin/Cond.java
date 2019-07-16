@@ -12,6 +12,7 @@ public class Cond {
     final static int READY = 0, FINISHED = 1, BUSY = 2;
     final AtomicInteger state = new AtomicInteger(0);
     volatile Consumer<Future<Boolean>> task;
+    Future<Boolean> f;
     public String toString() {
         return task.toString()+":"+state.get();
     }

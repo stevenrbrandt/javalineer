@@ -43,26 +43,40 @@ public class CondMgr {
 
     public void signal() {
         CondLink cl = getRef(head);
-        signal(cl);
+        signal(cl,new int[1]);
     }
 
-    private void signal(CondLink cl) {
-        while(cl != null) {
-            if(cl.cond.state.compareAndSet(Cond.READY, Cond.BUSY)) {
-                final CondLink cf = cl;
-                Future<Boolean> f = new Future<>();
-                f.then((b)->{
-                    if(b.get()) {
-                        cf.cond.state.compareAndSet(Cond.BUSY, Cond.FINISHED);
-                    } else {
-                        cf.cond.state.compareAndSet(Cond.BUSY, Cond.READY);
-                        signal(cf.next.get());
-                    }
-                });
-                cl.cond.task.accept(f);
-                break;
+    private void signal(CondLink cl,int[] status) {
+        while(true) {
+            while(cl != null) {
+                if(cl.cond.state.get() == Cond.BUSY) {
+                    status[0]++;
+                    assert !cl.cond.f.finished();
+                }
+                if(cl.cond.state.compareAndSet(Cond.READY, Cond.BUSY)) {
+                    final CondLink cf = cl;
+                    Future<Boolean> f = new Future<>();
+                    cf.cond.f = f;
+                    f.then((b)->{
+                        if(b.get()) {
+                            cf.cond.state.compareAndSet(Cond.BUSY, Cond.FINISHED);
+                        } else {
+                            cf.cond.state.compareAndSet(Cond.BUSY, Cond.READY);
+                            signal(cf.next.get(),status);
+                        }
+                    });
+                    cl.cond.task.accept(f);
+                    break;
+                } else {
+                    Thread.yield();
+                }
+                cl = getRef(cl.next);
             }
-            cl = getRef(cl.next);
+            if(status[0] > 0) {
+                status[0] = 0;
+                cl = getRef(head);
+            } else
+                break;
         }
     }
 

@@ -85,6 +85,23 @@ public class Guard implements Comparable<Guard> {
         runCondition(ts,con);
     }
 
+    public static <T1,T2> void runCondition(
+            GuardVar<T1> gv1,
+            GuardVar<T2> gv2,
+            final CondArg2f<T1,T2> c) {
+        TreeSet<Guard> ts = new TreeSet<>();
+        ts.add(gv1);
+        ts.add(gv2);
+        Consumer<Future<Boolean>> con = (f)->{
+            try {
+                f.set(c.run(gv1.var, gv2.var));
+            } catch(Throwable t) {
+                t.printStackTrace();
+            }
+        };
+        runCondition(ts,con);
+    }
+
     public static <T1,T2,T3> void runCondition(
             GuardVar<T1> gv1,
             GuardVar<T2> gv2,

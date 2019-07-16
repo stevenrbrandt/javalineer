@@ -57,7 +57,7 @@ class ProdCon {
 }
 
 class Segment {
-    final static boolean all_ = true;
+    final static boolean ALL_ = false;
     final static int N_STEPS = 100;
     final static int N_SEGS = 10;
 
@@ -85,25 +85,23 @@ class Segment {
         if(id == 0)
             System.out.println("Running step: " + step+" id="+id);
         //condition with(left => l, right => r)
-        Guard.runCondition(left, right, (l_,r_,f)->
+        Guard.runCondition(left, right, (l_,r_)->
         {
             ProdCon l = l_.get();
             ProdCon r = r_.get();
             //assert this guardedby left.getGuard();
             //assert this guardedby right.getGuard();
             if (!l.isReadyToConsume(step)) {
-                f.set(false);
-                return;
+                return false;
             }
             if (!r.isReadyToConsume(step)) {
-                f.set(false);
-                return;
+                return false;
             }
             //System.out.printf("Stage1: step=%d, id=%d%n",step,id);
             l.consume(step);
             r.consume(step);
             assert r.id != l.id;
-            if(all_) {
+            if(ALL_) {
                 left.signalAll();
                 right.signalAll();
             } else {
@@ -112,25 +110,23 @@ class Segment {
             }
             //ignore { Thread.sleep(100); }
             //condition with(neighborLeft => nl, neighborRight => nr)
-            Guard.runCondition(neighborLeft, neighborRight, (nl_, nr_, ff)->
+            Guard.runCondition(neighborLeft, neighborRight, (nl_, nr_)->
             {
                 ProdCon nl = nl_.get();
                 ProdCon nr = nr_.get();
                 //assert this guardedby neighborLeft.getGuard();
                 //assert this guardedby neighborRight.getGuard();
                 if (!nl.isReadyToProduce(step)) {
-                    ff.set(false);
-                    return;
+                    return false;
                 }
                 if (!nr.isReadyToProduce(step)) {
-                    ff.set(false);
-                    return;
+                    return false;
                 }
                 //System.out.printf("Stage2: step=%d, id=%d%n",step,id);
                 nl.produce(step + 1);
                 nr.produce(step + 1);
                 assert nl.id != nr.id: "on seg: "+id;
-                if(all_) {
+                if(ALL_) {
                     neighborLeft.signalAll();
                     neighborRight.signalAll();
                 } else {
@@ -139,9 +135,9 @@ class Segment {
                 }
                 runStep(step + 1);
 
-                ff.set(true);
+                return true;
             });
-            f.set(true);
+            return true;
         });
     }
 }

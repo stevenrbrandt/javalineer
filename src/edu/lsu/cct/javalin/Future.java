@@ -57,12 +57,16 @@ public class Future<T> {
 
     void done() {
         FTask next = null;
+        boolean success = false;
         while(true) {
             next = pending.get();
             assert next != DONE;
-            if(pending.compareAndSet(next,DONE))
+            if(pending.compareAndSet(next,DONE)) {
+                success = true;
                 break;
+            }
         }
+        assert success;
         while(next != null) {
             final Runnable task = next.task;
             Pool.run(()->{
@@ -79,6 +83,7 @@ public class Future<T> {
     public void set(final T data) {
         final Future<T> self = this;
         if (data instanceof Future) {
+            assert false;
             Future<T> f = (Future<T>)data;
             f.then(()->{
                 self.set(f.get());
@@ -104,6 +109,10 @@ public class Future<T> {
         if(ex != null)
             throw new RuntimeException(ex);
         return data;
+    }
+
+    public boolean finished() {
+        return pending.get() == DONE;
     }
 
     public void then(final Runnable r) {
