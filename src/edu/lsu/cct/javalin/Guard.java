@@ -98,6 +98,17 @@ public class Guard implements Comparable<Guard> {
         runCondition(ts,con);
     }
 
+    public static void runMe(final List<GuardVar<Object>> vo, final CondArgN c) {
+        final List<Var<Object>> objects = new ArrayList<>();
+        TreeSet<Guard> ts = new TreeSet<>();
+        for(GuardVar<Object> go : vo) {
+            ts.add(go);
+            objects.add(go.var);
+        }
+        Consumer<Future<Boolean>> con = (f)->{ c.run(objects, f); };
+        runCondition(ts, con);
+    }
+
     public static void runCondition(final TreeSet<Guard> ts,final Consumer<Future<Boolean>> c) {
         assert ts.size() > 0;
         Cond cond = new Cond();
