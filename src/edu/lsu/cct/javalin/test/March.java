@@ -58,7 +58,7 @@ class ProdCon {
 
 class Segment {
     final static boolean ALL_ = false;
-    final static int N_STEPS = 100;
+    final static int N_STEPS = 30;
     final static int N_SEGS = 10;
 
     final int id;
@@ -77,9 +77,12 @@ class Segment {
 
     Segment(int id) { this.id = id; }
 
+    volatile static boolean complete = false;
+
     void runStep(final int step) {
         if(step == N_STEPS && id == 0) {
             System.out.println("Complete!");
+            complete = true;
             return;
         }
         if(id == 0)
@@ -173,5 +176,6 @@ public class March {
             seg.runStep(0);
         }
         Pool.await();
+        assert Segment.complete;
     }
 }

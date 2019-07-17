@@ -53,7 +53,6 @@ public class CondMgr {
                 Future<Boolean> f = new Future<>();
                 cf.cond.f = f;
                 f.then((b)->{
-                    Here.println("f.then");
                     if(b.get()) {
                         cf.cond.state.compareAndSet(Cond.BUSY, Cond.FINISHED);
                     } else {

@@ -14,6 +14,6 @@ public class Cond {
     volatile Consumer<Future<Boolean>> task;
     Future<Boolean> f;
     public String toString() {
-        return task.toString()+":"+state.get();
+        return task.toString()+":"+state.get()+":"+f;
     }
 }

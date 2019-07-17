@@ -115,7 +115,7 @@ public class Guard implements Comparable<Guard> {
         runCondition(ts,con);
     }
 
-    public static void runMe(final List<GuardVar<Object>> vo, final CondArgN c) {
+    public static void runCOndition(final List<GuardVar<Object>> vo, final CondArgN c) {
         final List<Var<Object>> objects = new ArrayList<>();
         TreeSet<Guard> ts = new TreeSet<>();
         for(GuardVar<Object> go : vo) {
@@ -133,14 +133,13 @@ public class Guard implements Comparable<Guard> {
             Runnable r = ()->{ c.accept(fb); };
             Guard.runGuarded(ts,r);
         };
+        for(Guard g : ts)
+            g.cmgr.add(new CondLink(cond));
         Future<Boolean> f = new Future<>();
+        cond.f = f;
         f.then((b)->{
             if(b.get()) {
-                ;
-            } else {
-                for(Guard g : ts) {
-                    g.cmgr.add(new CondLink(cond));
-                }
+                cond.state.compareAndSet(Cond.READY,Cond.FINISHED);
             }
         });
         cond.task.accept(f);
