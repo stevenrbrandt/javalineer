@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 public class CondMgr {
     AtomicReference<CondLink> head = new AtomicReference<>(null);
 
-    public void add(Consumer<Future<Boolean>> c) {
+    public void add(CondTask c) {
         CondLink cl = new CondLink(new Cond());
         cl.cond.task = c;
         add(cl);
@@ -47,43 +47,21 @@ public class CondMgr {
     }
 
     private void signal(CondLink cl) {
-        while(cl != null) {
-            if(cl.cond.state.compareAndSet(Cond.READY, Cond.BUSY)) {
-                final CondLink cf = cl;
-                Future<Boolean> f = new Future<>();
-                cf.cond.f = f;
-                f.then((b)->{
-                    if(b.get()) {
-                        cf.cond.state.compareAndSet(Cond.BUSY, Cond.FINISHED);
-                    } else {
-                        cf.cond.state.compareAndSet(Cond.BUSY, Cond.READY);
-                        signal(cf.next.get());
-                    }
-                });
-                cl.cond.task.accept(f);
-                break;
-            } else {
-                Thread.yield();
-            }
-            cl = getRef(cl.next);
+        if(cl != null) {
+            final CondLink cf = cl;
+            final CondTask task = cl.cond.task;
+            Guard.runGuarded(cl.cond.gset,()->{
+                task.run();
+                if(!task.done)
+                    signal(getRef(cf.next));
+            });
         }
     }
 
     public void signalAll() {
         CondLink cl = getRef(head);
         while(cl != null) {
-            if(cl.cond.state.compareAndSet(Cond.READY, Cond.BUSY)) {
-                final CondLink cf = cl;
-                Future<Boolean> f = new Future<>();
-                f.then((b)->{
-                    if(b.get()) {
-                        cf.cond.state.compareAndSet(Cond.BUSY, Cond.FINISHED);
-                    } else {
-                        cf.cond.state.compareAndSet(Cond.BUSY, Cond.READY);
-                    }
-                });
-                cl.cond.task.accept(f);
-            }
+            Guard.runGuarded(cl.cond.gset, cl.cond.task);
             cl = getRef(cl.next);
         }
     }

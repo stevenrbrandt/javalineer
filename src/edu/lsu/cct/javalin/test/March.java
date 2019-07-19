@@ -88,8 +88,8 @@ class Segment {
         if(id == 0)
             System.out.println("Running step: " + step+" id="+id);
         //condition with(left => l, right => r)
-        Guard.runCondition(left, right, (l_,r_)->
-        {
+        Guard.runCondition(left, right, new CondTask2<>() {
+          public boolean check(Var<ProdCon> l_, Var<ProdCon> r_) {
             ProdCon l = l_.get();
             ProdCon r = r_.get();
             //assert this guardedby left.getGuard();
@@ -141,6 +141,7 @@ class Segment {
                 return true;
             });
             return true;
+          }
         });
     }
 }

@@ -27,7 +27,7 @@ public class TestBank3 {
         GuardVar<Bank> a = new GuardVar<>(new Bank());
         GuardVar<Bank> b = new GuardVar<>(new Bank());
 
-        for(int i=0;i<1000;i++) {
+        for(int i=0;i<500;i++) {
             Pool.run(()->{
                 Guard.runCondition(a,(bank,fb)->{
                     fb.set(bank.get().withdraw(1));
@@ -57,7 +57,7 @@ public class TestBank3 {
 
         a.runGuarded((bank)->{
             out[0] = bank.get().balance;
-            assert out[0] == 0;
+            assert out[0] == 0 : out[0];
         });
 
         Pool.await();

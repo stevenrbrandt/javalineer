@@ -50,6 +50,26 @@ public class Guard implements Comparable<Guard> {
     public static void runGuarded(Guard g, Runnable r) {
         g.runGuarded(r);
     }
+    public static  <T> void runGuarded(final GuardVar<T> g, final GuardArg1<T> c) {
+        g.runGuarded(()->{ c.run(g.var); });
+    }
+    public static <T1,T2> void runGuarded(final GuardVar<T1> g1,final GuardVar<T2> g2, final GuardArg2<T1,T2> c) {
+        final TreeSet<Guard> ts = new TreeSet<>();
+        ts.add(g1);
+        ts.add(g2);
+        Guard.runGuarded(ts,()->{ c.run(g1.var,g2.var); });
+    }
+    public static <T1,T2,T3> void runGuarded(
+            final GuardVar<T1> g1,
+            final GuardVar<T2> g2,
+            final GuardVar<T3> g3,
+            final GuardArg3<T1,T2,T3> c) {
+        final TreeSet<Guard> ts = new TreeSet<>();
+        ts.add(g1);
+        ts.add(g2);
+        ts.add(g3);
+        Guard.runGuarded(ts,()->{ c.run(g1.var,g2.var,g3.var); });
+    }
     public static void runGuarded(TreeSet<Guard> gset, Runnable r) {
         GuardTask gt = new GuardTask(gset,r);
         gt.run();
@@ -67,81 +87,45 @@ public class Guard implements Comparable<Guard> {
 
     public static <T> void runCondition(
             GuardVar<T> gv,
-            final CondArg1<T> c) {
+            final CondTask1<T> c) {
         TreeSet<Guard> ts = new TreeSet<>();
         ts.add(gv);
-        Consumer<Future<Boolean>> con = (f)->{ c.run(gv.var, f); };
-        runCondition(ts,con);
+        c.set1(gv.var);
+        runCondition(ts,c);
     }
 
     public static <T1,T2> void runCondition(
             GuardVar<T1> gv1,
             GuardVar<T2> gv2,
-            final CondArg2<T1,T2> c) {
+            final CondTask2<T1,T2> c) {
         TreeSet<Guard> ts = new TreeSet<>();
         ts.add(gv1);
         ts.add(gv2);
-        Consumer<Future<Boolean>> con = (f)->{ c.run(gv1.var, gv2.var, f); };
-        runCondition(ts,con);
-    }
-
-    public static <T1,T2> void runCondition(
-            GuardVar<T1> gv1,
-            GuardVar<T2> gv2,
-            final CondArg2f<T1,T2> c) {
-        TreeSet<Guard> ts = new TreeSet<>();
-        ts.add(gv1);
-        ts.add(gv2);
-        Consumer<Future<Boolean>> con = (f)->{
-            try {
-                f.set(c.run(gv1.var, gv2.var));
-            } catch(Throwable t) {
-                t.printStackTrace();
-            }
-        };
-        runCondition(ts,con);
+        c.set1(gv1.var);
+        c.set2(gv2.var);
+        runCondition(ts,c);
     }
 
     public static <T1,T2,T3> void runCondition(
             GuardVar<T1> gv1,
             GuardVar<T2> gv2,
             GuardVar<T3> gv3,
-            final CondArg3<T1,T2,T3> c) {
+            final CondTask3<T1,T2,T3> c) {
         TreeSet<Guard> ts = new TreeSet<>();
         ts.add(gv1);
         ts.add(gv2);
-        ts.add(gv3);
-        Consumer<Future<Boolean>> con = (f)->{ c.run(gv1.var, gv2.var, gv3.var, f); };
-        runCondition(ts,con);
+        c.set1(gv1.var);
+        c.set2(gv2.var);
+        c.set3(gv3.var);
+        runCondition(ts,c);
     }
 
-    public static void runCOndition(final List<GuardVar<Object>> vo, final CondArgN c) {
-        final List<Var<Object>> objects = new ArrayList<>();
-        TreeSet<Guard> ts = new TreeSet<>();
-        for(GuardVar<Object> go : vo) {
-            ts.add(go);
-            objects.add(go.var);
-        }
-        Consumer<Future<Boolean>> con = (f)->{ c.run(objects, f); };
-        runCondition(ts, con);
-    }
-
-    public static void runCondition(final TreeSet<Guard> ts,final Consumer<Future<Boolean>> c) {
+    public static void runCondition(final TreeSet<Guard> ts,final CondTask c) {
         assert ts.size() > 0;
         Cond cond = new Cond();
-        cond.task = (fb)->{
-            Runnable r = ()->{ c.accept(fb); };
-            Guard.runGuarded(ts,r);
-        };
+        cond.task = c;
         for(Guard g : ts)
             g.cmgr.add(new CondLink(cond));
-        Future<Boolean> f = new Future<>();
-        cond.f = f;
-        f.then((b)->{
-            if(b.get()) {
-                cond.state.compareAndSet(Cond.READY,Cond.FINISHED);
-            }
-        });
-        cond.task.accept(f);
+        Guard.runGuarded(ts,c);
     }
 }
