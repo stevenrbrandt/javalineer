@@ -28,14 +28,18 @@ public class TestBank2 {
 
         for(int i=0;i<1000;i++) {
             Pool.run(()->{
-                Guard.runCondition(a,(bank,fb)->{
-                    fb.set(bank.get().withdraw(1));
+                Guard.runCondition(a,new CondTask1<>() {
+                    public boolean check(Var<Bank> bank) {
+                        return bank.get().withdraw(1);
+                    }
                 });
             });
             Pool.run(()->{
-                a.runGuarded((bank)->{
-                    bank.get().deposit(1);
-                    bank.get().getGuard().signal();
+                Guard.runGuarded(a,new GuardArg1<Bank>() {
+                    public void run(Var<Bank> bank) {
+                        bank.get().deposit(1);
+                        bank.get().getGuard().signal();
+                    }
                 });
             });
         }

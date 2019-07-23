@@ -6,8 +6,6 @@ public abstract class CondTask1<T> extends CondTask {
 
     public abstract boolean check(Var<T> t);
 
-    boolean done = false;
-
     public final void run() {
         if(!done)
             done = check(t);

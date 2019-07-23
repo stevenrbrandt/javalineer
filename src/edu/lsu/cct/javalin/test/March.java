@@ -57,9 +57,9 @@ class ProdCon {
 }
 
 class Segment {
-    final static boolean ALL_ = false;
-    final static int N_STEPS = 30;
-    final static int N_SEGS = 10;
+    final static boolean ALL_ = true;
+    final static int N_STEPS = 100;
+    final static int N_SEGS = 100;
 
     final int id;
 
@@ -80,8 +80,10 @@ class Segment {
     volatile static boolean complete = false;
 
     void runStep(final int step) {
-        if(step == N_STEPS && id == 0) {
-            System.out.println("Complete!");
+        if(step == N_STEPS) {
+            if(id == 0) {
+                System.out.println("Complete!");
+            }
             complete = true;
             return;
         }
@@ -113,8 +115,10 @@ class Segment {
             }
             //ignore { Thread.sleep(100); }
             //condition with(neighborLeft => nl, neighborRight => nr)
-            Guard.runCondition(neighborLeft, neighborRight, (nl_, nr_)->
+            Guard.runCondition(neighborLeft, neighborRight, new CondTask2<>()
             {
+              @Override
+              public boolean check(Var<ProdCon> nl_, Var<ProdCon> nr_) {
                 ProdCon nl = nl_.get();
                 ProdCon nr = nr_.get();
                 //assert this guardedby neighborLeft.getGuard();
@@ -139,6 +143,7 @@ class Segment {
                 runStep(step + 1);
 
                 return true;
+              }
             });
             return true;
           }

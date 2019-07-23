@@ -38,6 +38,7 @@ public class TestBank {
             Pool.run(()->{
                 a.runGuarded((bank)->{
                     bank.get().deposit(1);
+                    bank.signal();
                 });
             });
         }

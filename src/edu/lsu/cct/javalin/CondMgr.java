@@ -4,16 +4,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.TreeSet;
 
 
 public class CondMgr {
     AtomicReference<CondLink> head = new AtomicReference<>(null);
 
-    public void add(CondTask c) {
-        CondLink cl = new CondLink(new Cond());
-        cl.cond.task = c;
-        add(cl);
-    }
     public void add(CondLink cl) {
         while(true) {
             cl.next.set(head.get());
@@ -32,7 +28,7 @@ public class CondMgr {
             r = ref.get();
             if(r == null)
                 return null;
-            if(r.cond.state.get() == Cond.FINISHED) {
+            if(r.cond.task.done) {
                 CondLink r2 = r.next.get();
                 ref.compareAndSet(r, r2);
             } else
@@ -48,10 +44,21 @@ public class CondMgr {
 
     private void signal(CondLink cl) {
         if(cl != null) {
+            if(cl.cond == null) throw cl.err;
+            assert cl.cond.gset != null;
             final CondLink cf = cl;
             final CondTask task = cl.cond.task;
             Guard.runGuarded(cl.cond.gset,()->{
+                if(task.done) {
+                    signal(getRef(cf.next));
+                    ;//Here.println(" signal re-run "+cf.cond);
+                    return;
+                }
                 task.run();
+                if(task.done)
+                    ;//Here.println(" signal run "+cf.cond);
+                else
+                    ;//Here.println(" signal fail "+cf.cond);
                 if(!task.done)
                     signal(getRef(cf.next));
             });

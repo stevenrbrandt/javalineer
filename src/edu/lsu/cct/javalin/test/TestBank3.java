@@ -1,8 +1,10 @@
 package edu.lsu.cct.javalin.test;
 
 import edu.lsu.cct.javalin.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TestBank3 {
+    static AtomicInteger wc = new AtomicInteger(0), tc = new AtomicInteger(0), dc = new AtomicInteger(0);
 
     static class Bank extends Guarded {
         int balance = 0;
@@ -27,33 +29,44 @@ public class TestBank3 {
         GuardVar<Bank> a = new GuardVar<>(new Bank());
         GuardVar<Bank> b = new GuardVar<>(new Bank());
 
-        for(int i=0;i<500;i++) {
+        for(int i=0;i<1000;i++) {
             Pool.run(()->{
-                Guard.runCondition(a,(bank,fb)->{
-                    fb.set(bank.get().withdraw(1));
-                });
-            });
-            Pool.run(()->{
-                Guard.runCondition(a,b,(banka,bankb,fb)->{
-                    if(bankb.get().withdraw(1)) {
-                        banka.get().deposit(1);
-                        banka.get().getGuard().signal();
-                        fb.set(true);
-                    } else {
-                        fb.set(false);
+                Guard.runCondition(a,new CondTask1<>() {
+                    public boolean check(Var<Bank> bank) {
+                        boolean b = bank.get().withdraw(1);
+                        if(b) wc.getAndIncrement();
+                        return b;
                     }
                 });
             });
             Pool.run(()->{
-                b.runGuarded((bank)->{
-                    bank.get().deposit(1);
-                    bank.get().getGuard().signal();
+                Guard.runCondition(a,b,new CondTask2<>() {
+                    public boolean check(Var<Bank> banka,Var<Bank> bankb) {
+                        if(bankb.get().withdraw(1)) {
+                            banka.get().deposit(1);
+                            banka.signal();
+                            tc.getAndIncrement();
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                });
+            });
+            Pool.run(()->{
+                Guard.runGuarded(b,new GuardArg1<>() {
+                    public void run(Var<Bank> bank) {
+                        bank.get().deposit(1);
+                        bank.signal();
+                        dc.getAndIncrement();
+                    }
                 });
             });
         }
 
         Pool.await();
         int[] out = new int[1];
+        System.out.println("wc="+wc+", tc="+tc+", dc="+dc);
 
         a.runGuarded((bank)->{
             out[0] = bank.get().balance;

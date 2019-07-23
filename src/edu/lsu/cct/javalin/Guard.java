@@ -114,6 +114,7 @@ public class Guard implements Comparable<Guard> {
         TreeSet<Guard> ts = new TreeSet<>();
         ts.add(gv1);
         ts.add(gv2);
+        ts.add(gv3);
         c.set1(gv1.var);
         c.set2(gv2.var);
         c.set3(gv3.var);
@@ -124,6 +125,7 @@ public class Guard implements Comparable<Guard> {
         assert ts.size() > 0;
         Cond cond = new Cond();
         cond.task = c;
+        cond.gset = ts;
         for(Guard g : ts)
             g.cmgr.add(new CondLink(cond));
         Guard.runGuarded(ts,c);
