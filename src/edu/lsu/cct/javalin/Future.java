@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Future<T> {
     static class FTask {
         Runnable task;
-        AtomicReference<FTask> next = new AtomicReference<>(null);
+        FTask next;
         public String toString() {
             return "@"+next;
         }
@@ -29,22 +29,13 @@ public class Future<T> {
 
     private volatile T data = null;
     private volatile Throwable ex = null;
-
-    private final static FTask DONE;
-    static {
-        FTask ft = new FTask();
-        ft.next.set(ft);
-        DONE = ft;
-    }
-
-    private final AtomicReference<FTask> head = new AtomicReference<>(null);
-    private final AtomicReference<FTask> tail = new AtomicReference<>(null);
+    private final static FTask DONE = new FTask();
+    private final AtomicReference<FTask> pending = new AtomicReference<>(null);
 
     public Future() {}
     public Future(T t) {
         data = t;
-        tail.set(DONE);
-        head.set(DONE);
+        pending.set(DONE);
     }
 
     /**
@@ -65,35 +56,23 @@ public class Future<T> {
     }
 
     void done() {
-        FTask ft = null;
+        FTask next = null;
         boolean success = false;
         while(true) {
-            ft = tail.get();
-            if(ft == null) {
-                if(tail.compareAndSet(null,DONE)) {
-                    return;
-                } else {
-                    continue;
-                }
-            }
-            assert ft != DONE;
-            if(ft.next.compareAndSet(null,DONE)) {
+            next = pending.get();
+            assert next != DONE;
+            if(pending.compareAndSet(next,DONE)) {
                 success = true;
                 break;
             }
         }
         assert success;
-        ft = head.get();
-        while(ft == null) {
-            Thread.yield();
-            ft = head.get();
-        }
-        while(ft != DONE) {
-            final Runnable task = ft.task;
+        while(next != null) {
+            final Runnable task = next.task;
             Pool.run(()->{
                 task.run();
             });
-            ft = ft.next.get();
+            next = next.next;
         }
     }
 
@@ -126,36 +105,25 @@ public class Future<T> {
     }
 
     public T get() { 
+        assert pending.get() == DONE;
         if(ex != null)
             throw new RuntimeException(ex);
         return data;
     }
 
     public boolean finished() {
-        var ft = tail.get();
-        return ft == null || ft.next.get() == DONE;
+        return pending.get() == DONE;
     }
 
     public void then(final Runnable r) {
         FTask ft = new FTask();
         ft.task = r;
         while(true) {
-            FTask tval = tail.get();
-            if(tval == null) {
-                if(tail.compareAndSet(null, ft)) {
-                    head.set(ft);
-                    return;
-                } else
-                    continue;
-            }
-            FTask tnext = tval.next.get();
-            if(tnext == DONE) {
+            ft.next = pending.get();
+            if(ft.next == DONE) {
                 Pool.run(()->{ r.run(); });
-                return;
-            }
-            if(tval.next.compareAndSet(null,ft)) {
-                while(!tail.compareAndSet(tval,ft))
-                    Thread.yield();
+                break;
+            } else if(pending.compareAndSet(ft.next, ft)) {
                 break;
             }
         }
