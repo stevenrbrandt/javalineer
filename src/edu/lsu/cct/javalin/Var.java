@@ -24,6 +24,7 @@ public class Var<T> {
         g.signalAll();
     }
 
+    @SuppressWarnings("unchecked")
     public GuardVar<T> guardVar() {
         return (GuardVar)g;
     }
