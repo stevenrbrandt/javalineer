@@ -54,7 +54,7 @@ public class TestBank3 {
                 });
             });
             Pool.run(()->{
-                Guard.runGuarded(b,new GuardArg1<>() {
+                Guard.runGuarded(b,new GuardTask1<>() {
                     public void run(Var<Bank> bank) {
                         bank.get().deposit(1);
                         bank.signal();

@@ -89,43 +89,6 @@ public class March2 implements Runnable {
                 }
             });
         }
-        /*
-        for(int i=0;i<N_SEGS;i++) {
-            final int ix = i;
-            final GuardVar<Segment> me = line.get(i);
-            Guard.runGuarded(line.get(i),new GuardArg1<Segment>() {
-              public void run(Var<Segment> s) {
-                final GuardVar<Segment> left = s.get().left;
-                final GuardVar<Segment> right = s.get().right;
-                Guard.runCondition(me, left, right, new CondTask3<>() {
-                  public boolean check(Var<Segment> ss,Var<Segment> l,Var<Segment> r) {
-                    final int lstep = l.get().step;
-                    final int rstep = r.get().step;
-                    final int step = ss.get().step;
-                    if(lstep >= step && rstep >= step) {
-                        ss.get().step++;
-                        if(true)//(ss.get().id==0)
-                            Here.print("id: "+ss.get().id+", step: s="+ss.get().step+"/r="+rstep+"/l="+lstep);
-                        if(ss.get().id > 0) {
-                            l.signal();
-                            System.out.print("  left:"+l.get().id);
-                        }
-                        if(ss.get().id < N_SEGS-1) {
-                            r.signal();
-                            System.out.print("  right:"+r.get().id);
-                        }
-                        System.out.println();
-                        return true;
-                    } else {
-                        Here.println(" -> id: "+ss.get().id+", step: s="+ss.get().step+"/r="+rstep+"/l="+lstep);
-                    }
-                    return false;
-                }
-              });
-            }
-          });
-        }
-        */
       }
 
       public static void main(String[] args) {
