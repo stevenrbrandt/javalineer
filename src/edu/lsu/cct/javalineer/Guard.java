@@ -1,0 +1,133 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package edu.lsu.cct.javalineer;
+
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.function.Consumer;
+
+/**
+ *
+ * @author sbrandt
+ */
+public class Guard implements Comparable<Guard> {
+    static AtomicInteger idSeq = new AtomicInteger(0);
+    public final int id = idSeq.getAndIncrement();
+
+    public int compareTo(Guard g) {
+        return id - g.id;
+    }
+    
+    public String toString() {
+        return "Guard("+id+")";
+    }
+
+    public Guard getGuard() {
+        return this;
+    }
+
+    AtomicReference<GuardTaskPair> task = new AtomicReference<>(null);
+
+    public static boolean has(Guard g) {
+        TreeSet<Guard> ts = GuardTask.GUARDS_HELD.get();
+        if(ts == null) return false;
+        return ts.contains(g);
+    }
+
+
+    public void runGuarded(Runnable r) {
+        TreeSet<Guard> tg = new TreeSet<>();
+        tg.add(this);
+        runGuarded(tg, r);
+    }
+
+    public static void runGuarded(Guard g, Runnable r) {
+        g.runGuarded(r);
+    }
+    public static  <T> void runGuarded(final GuardVar<T> g, final GuardTask1<T> c) {
+        g.runGuarded(()->{ c.run(g.var); });
+    }
+    public static <T1,T2> void runGuarded(final GuardVar<T1> g1,final GuardVar<T2> g2, final GuardTask2<T1,T2> c) {
+        final TreeSet<Guard> ts = new TreeSet<>();
+        ts.add(g1);
+        ts.add(g2);
+        Guard.runGuarded(ts,()->{ c.run(g1.var,g2.var); });
+    }
+    public static <T1,T2,T3> void runGuarded(
+            final GuardVar<T1> g1,
+            final GuardVar<T2> g2,
+            final GuardVar<T3> g3,
+            final GuardTask3<T1,T2,T3> c) {
+        final TreeSet<Guard> ts = new TreeSet<>();
+        ts.add(g1);
+        ts.add(g2);
+        ts.add(g3);
+        Guard.runGuarded(ts,()->{ c.run(g1.var,g2.var,g3.var); });
+    }
+    public static void runGuarded(TreeSet<Guard> gset, Runnable r) {
+        GuardTask gt = new GuardTask(gset,r);
+        gt.run();
+    }
+
+    CondMgr cmgr = new CondMgr();
+
+    public void signal() {
+        cmgr.signal();
+    }
+
+    public void signalAll() {
+        cmgr.signalAll();
+    }
+
+    public static <T> void runCondition(
+            GuardVar<T> gv,
+            final CondTask1<T> c) {
+        TreeSet<Guard> ts = new TreeSet<>();
+        ts.add(gv);
+        c.set1(gv.var);
+        runCondition(ts,c);
+    }
+
+    public static <T1,T2> void runCondition(
+            GuardVar<T1> gv1,
+            GuardVar<T2> gv2,
+            final CondTask2<T1,T2> c) {
+        TreeSet<Guard> ts = new TreeSet<>();
+        ts.add(gv1);
+        ts.add(gv2);
+        c.set1(gv1.var);
+        c.set2(gv2.var);
+        runCondition(ts,c);
+    }
+
+    public static <T1,T2,T3> void runCondition(
+            GuardVar<T1> gv1,
+            GuardVar<T2> gv2,
+            GuardVar<T3> gv3,
+            final CondTask3<T1,T2,T3> c) {
+        TreeSet<Guard> ts = new TreeSet<>();
+        ts.add(gv1);
+        ts.add(gv2);
+        ts.add(gv3);
+        c.set1(gv1.var);
+        c.set2(gv2.var);
+        c.set3(gv3.var);
+        runCondition(ts,c);
+    }
+
+    public static void runCondition(final TreeSet<Guard> ts,final CondTask c) {
+        assert ts.size() > 0;
+        Cond cond = new Cond();
+        cond.task = c;
+        cond.gset = ts;
+        for(Guard g : ts)
+            g.cmgr.add(new CondLink(cond));
+        Guard.runGuarded(ts,c);
+    }
+}
