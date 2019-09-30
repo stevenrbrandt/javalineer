@@ -1,0 +1,20 @@
+plugins {
+    id 'java-library'
+}
+
+repositories {
+
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src'
+            exclude 'edu/lsu/cct/javalineer/test/**'
+        }    
+    }
+}
+
+dependencies {
+
+}
