@@ -42,6 +42,7 @@ public class Guard implements Comparable<Guard> {
 
 
     public void runGuarded(Runnable r) {
+        Here.println(r);
         TreeSet<Guard> tg = new TreeSet<>();
         tg.add(this);
         runGuarded(tg, r);
