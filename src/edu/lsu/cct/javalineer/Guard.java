@@ -49,9 +49,11 @@ public class Guard implements Comparable<Guard> {
     }
 
     public static void runGuarded(Guard g, Runnable r) {
+        Here.println(""+g+" "+r);
         g.runGuarded(r);
     }
     public static  <T> void runGuarded(final GuardVar<T> g, final GuardTask1<T> c) {
+        Here.println(""+g+" "+c);
         g.runGuarded(()->{ c.run(g.var); });
     }
     public static <T1,T2> void runGuarded(final GuardVar<T1> g1,final GuardVar<T2> g2, final GuardTask2<T1,T2> c) {
