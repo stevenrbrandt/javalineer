@@ -42,18 +42,22 @@ public class Guard implements Comparable<Guard> {
 
 
     public void runGuarded(Runnable r) {
-        Here.println(r);
+        //Here.println(r);
         TreeSet<Guard> tg = new TreeSet<>();
         tg.add(this);
         runGuarded(tg, r);
     }
 
     public static void runGuarded(Guard g, Runnable r) {
-        Here.println(""+g+" "+r);
+        try {
+        //Here.println(""+g+" "+r);
         g.runGuarded(r);
+        } catch(Throwable t) {
+            t.printStackTrace();
+        }
     }
     public static  <T> void runGuarded(final GuardVar<T> g, final GuardTask1<T> c) {
-        Here.println(""+g+" "+c);
+        //Here.println(""+g+" "+c);
         g.runGuarded(()->{ c.run(g.var); });
     }
     public static <T1,T2> void runGuarded(final GuardVar<T1> g1,final GuardVar<T2> g2, final GuardTask2<T1,T2> c) {
@@ -74,7 +78,7 @@ public class Guard implements Comparable<Guard> {
         Guard.runGuarded(ts,()->{ c.run(g1.var,g2.var,g3.var); });
     }
     public static void runGuarded(TreeSet<Guard> gset, Runnable r) {
-        Here.println("here");
+        //Here.println("here");
         GuardTask gt = new GuardTask(gset,r);
         gt.run();
     }

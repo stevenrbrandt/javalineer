@@ -10,9 +10,9 @@ package edu.lsu.cct.javalineer;
  * @author sbrandt
  */
 public class Pool {
-    private static final MyPool POOL = new MyPool(Integer.parseInt(System.getProperty("POOL_SIZE","4")));
+    private static final MyPool POOL = new MyPool(Integer.parseInt(System.getProperty("POOL_SIZE","1")));
     static {
-        System.out.println("Pool size: "+POOL);
+        System.out.println("Pool size = "+POOL);
     }
     public static void await() {
         POOL.awaitQuiet();
