@@ -74,6 +74,7 @@ public class Guard implements Comparable<Guard> {
         Guard.runGuarded(ts,()->{ c.run(g1.var,g2.var,g3.var); });
     }
     public static void runGuarded(TreeSet<Guard> gset, Runnable r) {
+        Here.println("here");
         GuardTask gt = new GuardTask(gset,r);
         gt.run();
     }
