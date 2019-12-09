@@ -4,15 +4,15 @@ public class Var<T> {
     final Guard g;
     T data;
 
-    Var(T t,Guard g) { data = t; this.g = g; assert t != null; }
+    Var(T t,Guard g) { data = t; this.g = g; }
 
     public void set(T t) {
-        assert Guard.has(g);
+        assert Guard.has(g) : "The current thread does not have access to this Guard.";
         data = t;
     }
 
     public T get() {
-        assert Guard.has(g);
+        assert Guard.has(g) : "The current thread does not have access to this Guard.";
         return data;
     }
 
