@@ -8,9 +8,18 @@ public class TestFib {
         return fibc(n-1) + fibc(n-2);
     }
 
+    static int fib_sync(int n) {
+        if(n < 2)
+            return n;
+        else
+            return fib_sync(n-1)+fib_sync(n-2);
+    }
+
     static Future<Integer> fib(int n) {
         if(n < 2)
             return new Future<Integer>(n);
+        if(n < 20)
+            return new Future<Integer>(fib_sync(n));
         Future<Integer> f1 = fib(n-1);
         Future<Integer> f2 = fib(n-2);
         Future<Integer> f = new Future<>();
@@ -25,7 +34,7 @@ public class TestFib {
     public static void main(String[] args) {
         Test.requireAssert();
 
-        for(int i = 5; i < 27; i++) {
+        for(int i = 5; i < 40; i++) {
             final int f = i;
             Future<Integer> fib = fib(f);
             fib.then((n)->{

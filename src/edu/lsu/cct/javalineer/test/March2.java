@@ -5,12 +5,12 @@ import edu.lsu.cct.javalineer.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class March2 implements Runnable {
-    final static int N_SEGS = 10;
+    final static int N_SEGS = 100;
     static class Segment {
         GuardVar<Segment> left, right;
         int step;
         final int id;
-        Segment() { this.id = -1; step = 10; }
+        Segment() { this.id = -1; step = N_SEGS; }
         Segment(int id) { this.id = id; }
         public String toString() {
             return "Seg("+id+","+step+")";

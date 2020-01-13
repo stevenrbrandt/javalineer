@@ -82,12 +82,15 @@ public class Future<T> {
     @SuppressWarnings("unchecked")
     public void set(final T data) {
         final Future<T> self = this;
+        // TODO: Fix this
         if (data instanceof Future) {
             assert false;
+            /*
             Future<T> f = (Future<T>)data;
             f.then(()->{
                 self.set(f.get());
             });
+            */
         } else {
             this.data = data;
             done();
@@ -104,12 +107,6 @@ public class Future<T> {
         done();
     }
 
-    public T get() { 
-        assert pending.get() == DONE;
-        if(ex != null)
-            throw new RuntimeException(ex);
-        return data;
-    }
 
     public boolean finished() {
         return pending.get() == DONE;
@@ -129,9 +126,13 @@ public class Future<T> {
         }
     }
 
-    public void then(Consumer<Future<T>> c) {
-        final Future<T> self = this;
-        Runnable r = ()->{ c.accept(this); };
+    private Val<T> get() {
+        assert pending.get() == DONE;
+        return new  Val(data,ex);
+    }
+
+    public void then(Consumer<Val<T>> c) {
+        Runnable r = ()->{ c.accept(this.get()); };
         then(r);
     }
 
