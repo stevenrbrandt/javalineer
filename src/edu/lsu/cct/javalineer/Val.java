@@ -11,4 +11,11 @@ public class Val<T> {
             throw new RuntimeException(ex);
         return data;
     }
+    public String toString() {
+        if(ex != null)
+            return ex.toString();
+        if(data != null)
+            return data.toString();
+        return "null";
+    }
 }
