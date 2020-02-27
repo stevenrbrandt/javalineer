@@ -32,7 +32,7 @@ public class Guard implements Comparable<Guard> {
         return this;
     }
 
-    AtomicReference<GuardTaskPair> task = new AtomicReference<>(null);
+    AtomicReference<GuardTask> task = new AtomicReference<>(null);
 
     public static boolean has(Guard g) {
         TreeSet<Guard> ts = GuardTask.GUARDS_HELD.get();

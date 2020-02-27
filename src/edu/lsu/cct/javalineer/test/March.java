@@ -154,6 +154,7 @@ class Segment {
 public class March {
 
     public static void main(String[] args) {
+        Test.requireAssert();
         System.out.println("Segment.N_SEGS=" + Segment.N_SEGS);
         final List< Segment> segs = new ArrayList<>();
         for (int i = 0; i < Segment.N_SEGS; i++) {

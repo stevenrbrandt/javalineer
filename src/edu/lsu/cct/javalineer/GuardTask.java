@@ -66,16 +66,15 @@ public class GuardTask {
         }
         int ix = index;
         Guard g = gset.get(ix);
-        GuardTaskPair prev = g.task.getAndSet(new GuardTaskPair(this,ix));
+        GuardTask prev = g.task.getAndSet(this);
         if(prev == null) {
             runTask(g);
         } else {
-            assert prev.gtask.next.size() == prev.gtask.gset.size();
-            AtomicReference<GuardTask> nextt = prev.gtask.next.get(prev.index);
+            assert prev.next.size() == prev.gset.size();
+            var nextt = prev.next.get(prev.index);
             assert nextt != null;
-            if(!nextt.compareAndSet(null,this)) {
+            if(!nextt.compareAndSet(null,this))
                 runTask(g);
-            }
             assert nextt.get() != null;
         }
     }

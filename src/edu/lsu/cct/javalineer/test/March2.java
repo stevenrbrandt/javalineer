@@ -92,6 +92,7 @@ public class March2 implements Runnable {
       }
 
       public static void main(String[] args) {
+        Test.requireAssert();
         Pool.run(new March2());
         Pool.await();
       }
