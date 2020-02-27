@@ -10,6 +10,9 @@ import java.util.TreeSet;
 public class CondMgr {
     AtomicReference<CondLink> head = new AtomicReference<>(null);
 
+    /**
+     * Atomically append to the front of the list.
+     */
     public void add(CondLink cl) {
         while(true) {
             cl.next.set(head.get());
@@ -18,10 +21,11 @@ public class CondMgr {
         }
     }
 
-    private void addBack(CondLink cl) {
-        cl.cond.state.set(Cond.READY);
-    }
-
+    /**
+     * Get a reference to the next Condition Link in
+     * the chain. If the condition has already succeeded,
+     * i.e. it is done, snip it out.
+     */
     private CondLink getRef(AtomicReference<CondLink> ref) {
         CondLink r = null;
         while(true) {
@@ -29,6 +33,7 @@ public class CondMgr {
             if(r == null)
                 return null;
             if(r.cond.task.done) {
+                // snip out completed task
                 CondLink r2 = r.next.get();
                 ref.compareAndSet(r, r2);
             } else
@@ -37,6 +42,11 @@ public class CondMgr {
         return r;
     }
 
+    /**
+     * Attempt to run each task in the condition list
+     * until one of them succeeds, or we reach the
+     * end of the list.
+     */
     public void signal() {
         CondLink cl = getRef(head);
         signal(cl);
@@ -51,20 +61,18 @@ public class CondMgr {
             Guard.runGuarded(cl.cond.gset,()->{
                 if(task.done) {
                     signal(getRef(cf.next));
-                    ;//Here.println(" signal re-run "+cf.cond);
                     return;
                 }
                 task.run();
-                if(task.done)
-                    ;//Here.println(" signal run "+cf.cond);
-                else
-                    ;//Here.println(" signal fail "+cf.cond);
                 if(!task.done)
                     signal(getRef(cf.next));
             });
         }
     }
 
+    /**
+     * Run all tasks in the condition list.
+     */
     public void signalAll() {
         CondLink cl = getRef(head);
         while(cl != null) {
