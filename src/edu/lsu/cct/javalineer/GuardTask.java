@@ -83,7 +83,7 @@ public class GuardTask {
         if (!next.get(index).compareAndSet(null, DONE)) {
             GuardTask prev = next.get(index).get();
             assert prev != DONE;
-            Pool.run(()->{ prev.runTask(g); });
+            prev.runTask(g);
         }
         assert next.get(index).get() != null;
         int ix = index;
@@ -95,8 +95,7 @@ public class GuardTask {
 
     private void runTask(Guard g) {
         if(index + 1 == gset.size()) {
-            // Don't need to force async, but do
-            // so for now.
+            // Don't need to force async
             Pool.run(()->{
                 run(r,gset);
                 free();
@@ -104,7 +103,6 @@ public class GuardTask {
         } else {
             index++;
             assert index < gset.size();
-            //Pool.run(()->{ run(); });
             run();
         }
     }
