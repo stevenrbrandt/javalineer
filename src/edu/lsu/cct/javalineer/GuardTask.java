@@ -64,8 +64,7 @@ public class GuardTask {
             run(r,gset);
             return;
         }
-        int ix = index;
-        Guard g = gset.get(ix);
+        Guard g = gset.get(index);
         GuardTask prev = g.task.getAndSet(this);
         if(prev == null) {
             runTask(g);
@@ -105,7 +104,8 @@ public class GuardTask {
         } else {
             index++;
             assert index < gset.size();
-            Pool.run(()->{ run(); });
+            //Pool.run(()->{ run(); });
+            run();
         }
     }
 }
