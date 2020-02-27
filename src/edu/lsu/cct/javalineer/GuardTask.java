@@ -86,7 +86,6 @@ public class GuardTask {
             prev.runTask(g);
         }
         assert next.get(index).get() != null;
-        int ix = index;
         if (index > 0) {
             index--;
             free();
