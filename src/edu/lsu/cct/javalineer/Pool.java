@@ -20,4 +20,7 @@ public class Pool {
     public static void run(Runnable r) {
         POOL.add(r);
     }
+    public static void runOne() {
+        POOL.runOne();
+    }
 }

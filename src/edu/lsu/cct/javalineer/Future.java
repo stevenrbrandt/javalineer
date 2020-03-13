@@ -37,6 +37,16 @@ public class Future<T> {
         data = t;
         pending.set(DONE);
     }
+    public Future(final Callable<T> t) {
+        final Future<T> self = this;
+        Pool.run(()->{
+            try {
+                self.set(t.call());
+            } catch(Exception e) {
+                self.setEx(e);
+            }
+        });
+    }
 
     /**
      * Diagnostic.
@@ -80,7 +90,7 @@ public class Future<T> {
      * Call to set a data value.
      */
     @SuppressWarnings("unchecked")
-    public void set(final T data) {
+    private void set(final T data) {
         final Future<T> self = this;
         // TODO: Fix this
         if (data instanceof Future) {
@@ -112,6 +122,62 @@ public class Future<T> {
         return pending.get() == DONE;
     }
 
+    public <R> Future<R> then(final Function<Val<T>,R> c) {
+        final Future<R> f = new Future<>();
+        Runnable r = ()->{
+            try {
+                f.set(c.apply(get_()));
+            } catch(Exception e) {
+                f.setEx(e);
+            }
+        };
+        then(r);
+        return f;
+    }
+
+    public static <T,R> Future<R> then(Future<T> f,final Function<Val<T>,R> c) {
+        return f.then(c);
+    }
+
+    public static <T1,T2,R> Future<R> then(
+            final Future<T1> f1,final Future<T2> f2,
+            Then2<Val<T1>,Val<T2>,R> c) {
+        final Future<R> f = new Future<>();
+        final Runnable r1 = ()->{
+            try {
+                f.set(c.apply(f1.get_(),f2.get_()));
+            } catch(Exception e) {
+                f.setEx(e);
+            }
+        };
+        Runnable r2 = ()->{
+            f1.then(r1);
+        };
+        f2.then(r2);
+        return f;
+    }
+
+    public static <T1,T2,T3,R> Future<R> then(
+            final Future<T1> f1,final Future<T2> f2,final Future<T3> f3,
+            Then3<Val<T1>,Val<T2>,Val<T3>,R> c) {
+        final Future<R> f = new Future<>();
+        final Runnable r1 = ()->{
+            try {
+                f.set(c.apply(f1.get_(),f2.get_(),f3.get_()));
+            } catch(Exception e) {
+                f.setEx(e);
+            }
+        };
+        Runnable r2 = ()->{
+            f1.then(r1);
+        };
+        Runnable r3 = ()->{
+            f2.then(r2);
+        };
+        f3.then(r3);
+        return f;
+    }
+
     public void then(final Runnable r) {
         FTask ft = new FTask();
         ft.task = r;
@@ -126,13 +192,23 @@ public class Future<T> {
         }
     }
 
-    private Val<T> get() {
+    /**
+     * Unsafe method, used for demonstration purposes
+     */
+    @Deprecated
+    public T get() {
+        while(pending.get() != DONE)
+           Pool.runOne();
+        return get_().get();
+    }
+
+    private Val<T> get_() {
         assert pending.get() == DONE;
-        return new  Val(data,ex);
+        return new Val<T>(data,ex);
     }
 
     public void then(Consumer<Val<T>> c) {
-        Runnable r = ()->{ c.accept(this.get()); };
+        Runnable r = ()->{ c.accept(this.get_()); };
         then(r);
     }
 

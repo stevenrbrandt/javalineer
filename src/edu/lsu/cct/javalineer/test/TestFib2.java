@@ -1,9 +1,8 @@
 package edu.lsu.cct.javalineer.test;
 
 import edu.lsu.cct.javalineer.*;
-import java.util.function.Function;
 
-public class TestFib {
+public class TestFib2 {
     static int fibc(int n) {
         if(n < 2) return n;
         return fibc(n-1) + fibc(n-2);
@@ -23,9 +22,7 @@ public class TestFib {
             return new Future<Integer>(fib_sync(n));
         Future<Integer> f1 = fib(n-1);
         Future<Integer> f2 = fib(n-2);
-        return Future.then(f1,f2,(v1,v2)-> {
-            return v1.get() + v2.get();
-        });
+        return new Future<Integer>(f1.get() + f2.get());
     }
 
     public static void main(String[] args) {
@@ -34,10 +31,9 @@ public class TestFib {
         for(int i = 5; i < 40; i++) {
             final int f = i;
             Future<Integer> fib = fib(f);
-            fib.then((n)->{
-                System.out.printf("fib(%d)=%d%n",f,n.get());
-                assert n.get() == fibc(f);
-            });
+            fib.get();
+            System.out.printf("fib(%d)=%d%n",f,fib.get());
+            assert fib.get() == fibc(f);
         }
 
         Pool.await();

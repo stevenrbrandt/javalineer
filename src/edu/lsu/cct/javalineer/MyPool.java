@@ -29,12 +29,15 @@ public class MyPool {
         }
     }
 
-    final static AtomicInteger idSeq = new AtomicInteger(0);
+    ThreadLocal<Integer> me = new ThreadLocal<>();
 
     class Worker extends Thread {
-        final int id = idSeq.getAndIncrement();
+        final int id;
 
-        Worker() {}
+        Worker(int id) {
+            this.id = id;
+            me.set(id);
+        }
 
         LinkedList<Runnable> ll = new LinkedList<>();
 
@@ -77,27 +80,54 @@ public class MyPool {
                 System.exit(1);
             }
         }
+
+        private synchronized Runnable rmOne() {
+            if(ll.size() == 0)
+                return null;
+            else
+                return ll.removeFirst();
+        }
+        public boolean runOne() {
+            Runnable run = rmOne();
+            if(run != null) {
+                run.run();
+                return true;
+            } else {
+                return false;
+            }
+        }
     }
 
-    List<Worker> workers = new ArrayList<>();
     final Random RAND = new Random();
 
     /**
      * Give task to a random worker.
      */
     void add(Runnable gt) {
-        int n = RAND.nextInt(workers.size());
-        workers.get(n).addTask(gt);
+        int n = RAND.nextInt(workers.length);
+        workers[n].addTask(gt);
     }
 
     final int size;
+    Worker[] workers;
     public MyPool(int size) {
         this.size = size;
+        workers = new Worker[size];
         for (int i = 0; i < size; i++) {
-            Worker w = this.new Worker();
+            Worker w = this.new Worker(i);
+            workers[i] = w;
             w.setDaemon(true);
-            workers.add(w);
             w.start();
+        }
+    }
+
+    public void runOne() {
+        for(int i=0;i<size;i++) {
+            while(me.get() == null)
+                Thread.yield();
+            int id = (me.get()+i) % size;
+            if(workers[id].runOne())
+                return;
         }
     }
 
