@@ -135,6 +135,27 @@ public class Future<T> {
         return f;
     }
 
+    /**
+     * This version of then is a function that returns a Future.
+     * The Future of the return value doesn't complete until the
+     * return value of the function supplied as an argument completes.
+     */
+    public <R> Future<R> thenFuture(final Function<Val<T>,Future<R>> c) {
+        final Future<R> f = new Future<>();
+        Runnable r = ()->{
+            final Future<R> fc = c.apply(get_());
+            fc.then(()->{
+                try {
+                    f.set(fc.get_().get());
+                } catch(Exception e) {
+                    f.setEx(e);
+                }
+            });
+        };
+        then(r);
+        return f;
+    }
+
     public static <T,R> Future<R> then(Future<T> f,final Function<Val<T>,R> c) {
         return f.then(c);
     }

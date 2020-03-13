@@ -23,8 +23,15 @@ public class TestFib {
             return new Future<Integer>(fib_sync(n));
         Future<Integer> f1 = fib(n-1);
         Future<Integer> f2 = fib(n-2);
-        return Future.then(f1,f2,(v1,v2)-> {
+        /*
+        return Future.then(f1, f2, (v1, v2)-> {
             return v1.get() + v2.get();
+        });
+        */
+        return f1.thenFuture((final Val<Integer> v1)->{
+            return f2.then((final Val<Integer> v2)->{
+                return v1.get()+v2.get();
+            });
         });
     }
 
