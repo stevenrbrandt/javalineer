@@ -90,7 +90,7 @@ class Segment {
         if(id == 0)
             System.out.println("Running step: " + step+" id="+id);
         //condition with(left => l, right => r)
-        Guard.runCondition(left, right, new CondTask2<>() {
+        Guard.runCondition(left, right, new CondCheck2<>() {
           public boolean check(Var<ProdCon> l_, Var<ProdCon> r_) {
             ProdCon l = l_.get();
             ProdCon r = r_.get();
@@ -115,7 +115,7 @@ class Segment {
             }
             //ignore { Thread.sleep(100); }
             //condition with(neighborLeft => nl, neighborRight => nr)
-            Guard.runCondition(neighborLeft, neighborRight, new CondTask2<>()
+            Guard.runCondition(neighborLeft, neighborRight, new CondCheck2<>()
             {
               @Override
               public boolean check(Var<ProdCon> nl_, Var<ProdCon> nr_) {

@@ -1,6 +1,6 @@
 package edu.lsu.cct.javalineer;
 
-public abstract class CondTask3<T1,T2,T3> extends CondTask {
+public class CondTask3<T1,T2,T3> extends CondTask {
     Var<T1> t1;
     Var<T2> t2;
     Var<T3> t3;
@@ -8,10 +8,13 @@ public abstract class CondTask3<T1,T2,T3> extends CondTask {
     public void set2(Var<T2> t2) { this.t2 = t2; }
     public void set3(Var<T3> t3) { this.t3 = t3; }
 
-    public abstract boolean check(Var<T1> t1,Var<T2> t2,Var<T3> t3);
+    public final CondCheck3<T1,T2,T3> check;
+    public CondTask3(CondCheck3<T1,T2,T3> check) {
+        this.check = check;
+    }
 
     final public void run() {
         if(!done)
-            done = check(t1,t2,t3);
+            done = check.check(t1,t2,t3);
     }
 }

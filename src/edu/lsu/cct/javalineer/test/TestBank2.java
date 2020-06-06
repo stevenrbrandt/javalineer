@@ -28,7 +28,7 @@ public class TestBank2 {
 
         for(int i=0;i<1000;i++) {
             Pool.run(()->{
-                Guard.runCondition(a,new CondTask1<>() {
+                Guard.runCondition(a,new CondCheck1<>() {
                     public boolean check(Var<Bank> bank) {
                         return bank.get().withdraw(1);
                     }

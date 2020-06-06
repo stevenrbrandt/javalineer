@@ -87,11 +87,24 @@ public class Guard implements Comparable<Guard> {
 
     public static <T> void runCondition(
             GuardVar<T> gv,
+            final CondCheck1<T> c) {
+        Guard.runCondition(gv,new CondTask1<T>(c));
+    }
+
+    public static <T> void runCondition(
+            GuardVar<T> gv,
             final CondTask1<T> c) {
         TreeSet<Guard> ts = new TreeSet<>();
         ts.add(gv);
         c.set1(gv.var);
         runCondition(ts,c);
+    }
+
+    public static <T1,T2> void runCondition(
+            GuardVar<T1> gv1,
+            GuardVar<T2> gv2,
+            final CondCheck2<T1,T2> c) {
+        Guard.runCondition(gv1,gv2,new CondTask2<T1,T2>(c));
     }
 
     public static <T1,T2> void runCondition(
@@ -104,6 +117,14 @@ public class Guard implements Comparable<Guard> {
         c.set1(gv1.var);
         c.set2(gv2.var);
         runCondition(ts,c);
+    }
+
+    public static <T1,T2,T3> void runCondition(
+            GuardVar<T1> gv1,
+            GuardVar<T2> gv2,
+            GuardVar<T3> gv3,
+            final CondCheck3<T1,T2,T3> c) {
+        Guard.runCondition(gv1,gv2,gv3,new CondTask3<T1,T2,T3>(c));
     }
 
     public static <T1,T2,T3> void runCondition(

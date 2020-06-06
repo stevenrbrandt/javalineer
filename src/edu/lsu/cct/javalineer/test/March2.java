@@ -16,7 +16,7 @@ public class March2 implements Runnable {
             return "Seg("+id+","+step+")";
         }
     }
-    static class Stepper extends CondTask3<Segment,Segment,Segment> {
+    static class Stepper implements CondCheck3<Segment,Segment,Segment> {
       public boolean check(Var<Segment> l,Var<Segment> ss,Var<Segment> r) {
         final int lstep = l.get().step;
         final int rstep = r.get().step;
@@ -31,7 +31,6 @@ public class March2 implements Runnable {
             */
             ss.get().step++;
             Stepper stepper = new Stepper();
-            assert !stepper.isDone();
             Guard.runCondition(l.guardVar(), ss.guardVar(), r.guardVar(), stepper);
             boolean show = ss.get().id == 0;// || ss.get().id == N_SEGS/2;
             if(show) 
