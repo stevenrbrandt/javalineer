@@ -142,6 +142,19 @@ public class Guard implements Comparable<Guard> {
         runCondition(ts,c);
     }
 
+    public static void runCondition(final TreeSet<Guard> ts,final CondAct ca) {
+        runCondition(ts,new CondTask() {
+            public void run() {
+                if(done)
+                    return;
+                final Future<Boolean> _result = new Future<>();
+                ca.act(_result);
+                assert _result.finished() : "Condition did not set value";
+                done = _result.get();
+            }
+        });
+    }
+
     public static void runCondition(final TreeSet<Guard> ts,final CondTask c) {
         assert ts.size() > 0;
         Cond cond = new Cond();
