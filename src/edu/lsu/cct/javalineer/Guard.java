@@ -74,6 +74,10 @@ public class Guard implements Comparable<Guard> {
         GuardTask gt = new GuardTask(gset,r);
         gt.run();
     }
+    public static void runNow(TreeSet<Guard> gset, Runnable r) {
+        GuardTask gt = new GuardTask(gset,r);
+        gt.runNow();
+    }
 
     CondMgr cmgr = new CondMgr();
 

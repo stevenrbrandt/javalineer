@@ -77,6 +77,27 @@ public class GuardTask {
             assert nextt.get() != null;
         }
     }
+
+    public void runNow() {
+        if(gset.size()==0) {
+            run(r,gset);
+            return;
+        }
+        Guard g = gset.get(index);
+        GuardTask prev = g.task.getAndSet(this);
+        if(prev == null) {
+            runTask(g);
+        } else {
+            assert prev.next.size() == prev.gset.size();
+            var nextt = prev.next.get(prev.index);
+            assert nextt != null;
+            if(!nextt.compareAndSet(null,this))
+                runTask(g);
+            else
+                runTask(null);
+            assert nextt.get() != null;
+        }
+    }
     
     private void free() {
         Guard g = gset.get(index);
