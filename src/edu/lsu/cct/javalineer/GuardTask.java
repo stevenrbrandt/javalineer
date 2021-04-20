@@ -91,7 +91,7 @@ public class GuardTask {
             assert prev.next.size() == prev.gset.size();
             var nextt = prev.next.get(prev.index);
             assert nextt != null;
-            if(!nextt.compareAndSet(null,this))
+            if(!nextt.compareAndSet(null,null))
                 runTask(g);
             else
                 runTask(null);
@@ -113,11 +113,15 @@ public class GuardTask {
         }
     }
 
-    private void runTask(Guard g) {
+    final private static List<Guard> EMPTY_LIST = new ArrayList<>();
+    private void runTask(final Guard g) {
         if(index + 1 == gset.size()) {
             // Don't need to force async
             Pool.run(()->{
-                run(r,gset);
+                if(g == null)
+                    run(r,EMPTY_LIST);
+                else
+                    run(r,gset);
                 free();
             });
         } else {

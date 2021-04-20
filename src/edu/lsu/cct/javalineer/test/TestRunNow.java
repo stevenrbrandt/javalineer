@@ -1,6 +1,7 @@
 package edu.lsu.cct.javalineer.test;
 
 import edu.lsu.cct.javalineer.Guard;
+import edu.lsu.cct.javalineer.GuardTask;
 import edu.lsu.cct.javalineer.Pool;
 
 import java.util.TreeSet;
@@ -20,8 +21,9 @@ public class TestRunNow {
             System.out.println("long task ended");
         });
 
-        Guard.runNow(new TreeSet<>() {{ add(g2); }}, () -> {
+        Guard.runNow(new TreeSet<>() {{ add(g1); }}, () -> {
             System.out.println("with g2 .. nowOrNever");
+            System.out.println("Guards: "+GuardTask.GUARDS_HELD.get());
         });
 
         //Guard.nowOrNever(new TreeSet<>() {{ add(g1); }}, () -> {
