@@ -84,18 +84,25 @@ public class GuardTask {
             return;
         }
         Guard g = gset.get(index);
-        GuardTask prev = g.task.getAndSet(this);
+        GuardTask prev = g.task.get();
         if(prev == null) {
-            runTask(g);
+            if(g.task.compareAndSet(null, this))
+                // We're still first...
+                runTask(g);
+            else
+                // Some thread got in ahead of us
+                runTask(null);
         } else {
             assert prev.next.size() == prev.gset.size();
             var nextt = prev.next.get(prev.index);
             assert nextt != null;
-            if(!nextt.compareAndSet(null,null))
-                runTask(g);
-            else
+            if(nextt.get() == null) {
                 runTask(null);
-            assert nextt.get() != null;
+            } else if(g.task.compareAndSet(prev, this)) {
+                runTask(g);
+            } else {
+                runTask(null);
+            }
         }
     }
     

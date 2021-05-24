@@ -12,18 +12,25 @@ public class TestRunNow {
         Guard g2 = new Guard();
 
         Guard.runGuarded(new TreeSet<>() {{ add(g1); }}, () -> {
-            System.out.println("with g1 .. normal (long task)");
+            System.out.println("Task 1 with g1 .. normal (long task)");
             try {
+                System.out.println("Task 1 Guards: "+GuardTask.GUARDS_HELD.get());
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            System.out.println("long task ended");
+            System.out.println("task 1 ended");
         });
 
         Guard.runNow(new TreeSet<>() {{ add(g1); }}, () -> {
-            System.out.println("with g2 .. nowOrNever");
-            System.out.println("Guards: "+GuardTask.GUARDS_HELD.get());
+            System.out.println("Task 2 with g1 .. nowOrNever");
+            try {
+                System.out.println("Task 2 Guards: "+GuardTask.GUARDS_HELD.get());
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("task 2 ended");
         });
 
         //Guard.nowOrNever(new TreeSet<>() {{ add(g1); }}, () -> {
@@ -35,7 +42,14 @@ public class TestRunNow {
         //});
 
         Guard.runGuarded(g1, () -> {
-            System.out.println("with g1 .. normal");
+            System.out.println("Task 3 with g1 .. normal (long task)");
+            try {
+                System.out.println("Task 3 Guards: "+GuardTask.GUARDS_HELD.get());
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("task 3 ended");
         });
 
 
